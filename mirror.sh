@@ -31,9 +31,15 @@ ERROR_cannotcdrepo="Cannot enter directory for repo."
 
 # functions:
 catch_failure(){
-	[ -n "$1" ] && >&2 echo "ERROR: $1"
-	>&2 echo "Caught a failure."
-	>&2 echo "Exiting..."
+	local errorMsg="$1"
+
+	if [[ -n "$errorMsg" ]]; then
+		>&2 echo "ERROR: $errorMsg"
+	else
+		>&2 echo "Caught a failure."
+		>&2 echo "Exit."
+	fi
+
 	exit 1
 }
 
@@ -119,7 +125,7 @@ query_github_repos(){
 	if [[ $http_code == 200 ]]; then
 		sed -n 's/.*"clone_url": "\(.*\)".*/\1/p' <<< "$repoData"
 	else
-		>&2 echo "ERROR: Got HTTP error: '$http_code', when trying to fetch from Github API."
+		>&2 echo "ERROR: Got HTTP error '$http_code' when trying to fetch from Github API."
 		return 1
 	fi
 	unset repoData
@@ -225,30 +231,13 @@ create_repo(){
 
 # main()
 case $1 in
-	archive|-a|--archive)
-		not_implemented
-		#archive_repo
-		;;
-	create|-c|--create|-create)
-		create_repo "$2"
-		;;
-	delete|-d|--delete|-delete)
-		not_implemented
-		;;
-	list|-l|--list|-list)
-		list_mirrors $2
-		;;
-	path|-p|--path|-path)
-		echo "$DIR"
-		;;
-	update|-u|--update|-update)
-		update_mirrors
-		;;
-	query|-q|--query|-query)
-		query_github_repos $2
-		;;
-	help|-h|--help|-help|*)
-		print_help "$0"
-		;;
+	archive|-a|--archive|-archive ) not_implemented       ;; #archive_repo
+	create |-c|--create |-create  ) create_repo "$2"      ;;
+	delete |-d|--delete |-delete  ) not_implemented       ;; #delete_repo
+	list   |-l|--list   |-list    ) list_mirrors $2       ;;
+	path   |-p|--path   |-path    ) echo "$DIR"           ;;
+	update |-u|--update |-update  ) update_mirrors        ;;
+	query  |-q|--query  |-query   ) query_github_repos $2 ;;
+	help   |-h|--help   |-help |* ) print_help "$0"       ;;
 esac
 exit
