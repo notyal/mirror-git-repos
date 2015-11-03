@@ -8,13 +8,16 @@ Copyright (c) 2015 Layton Nelson <notyal.dev@gmail.com>
 USAGE: ./mirror.sh [OPTION]...
 
 OPTIONS:
->  archive             Archive the repos.
->  create <url>        Add a repo to the mirror directory.
->  delete <repo>       Remove a repo from the mirror directory.
->  list                List mirrors in the mirror directory.
-     -a, --absolute    Show the absolute path for the location of each mirror.
->  path                Show the mirror directory location.
->  update              Update the list of mirrors in the mirror directory.
+  archive             Archive the repos.
+  create <url>        Add a repo to the mirror directory.
+  delete <repo>       Remove a repo from the mirror directory.
+  list                List mirrors in the mirror directory.
+    -a, --absolute    Show the absolute path for the location of each mirror.
+  path                Show the mirror directory location.
+  update              Update the list of mirrors in the mirror directory.
+  query <user>        Query the Github API for a list of repos associated with
+                      the provided user.
+  help                Show this help.
 ```
 
 ## License

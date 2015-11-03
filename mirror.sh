@@ -44,20 +44,24 @@ not_implemented(){
 
 print_help(){
 	local program="$1"
+	cat <<EOF
+mirror.sh: Keep a set of git mirrors up to date.
+Copyright (c) 2015 Layton Nelson <notyal.dev@gmail.com>
 
-	echo "mirror.sh: Keep a set of git mirrors up to date."
-	echo "Copyright (c) 2015 Layton Nelson <notyal.dev@gmail.com>"
-	echo
-	echo "USAGE: $program [OPTION]..."
-	echo
-	echo "OPTIONS:"
-	echo ">  archive             Archive the repos."
-	echo ">  create <url>        Add a repo to the mirror directory."
-	echo ">  delete <repo>       Remove a repo from the mirror directory."
-	echo ">  list                List mirrors in the mirror directory."
-	echo "     -a, --absolute    Show the absolute path for the location of each mirror."
-	echo ">  path                Show the mirror directory location."
-	echo ">  update              Update the list of mirrors in the mirror directory."
+USAGE: $program [OPTION]...
+
+OPTIONS:
+  archive             Archive the repos.
+  create <url>        Add a repo to the mirror directory.
+  delete <repo>       Remove a repo from the mirror directory.
+  list                List mirrors in the mirror directory.
+    -a, --absolute    Show the absolute path for the location of each mirror.
+  path                Show the mirror directory location.
+  update              Update the list of mirrors in the mirror directory.
+  query <user>        Query the Github API for a list of repos associated with
+                      the provided user.
+  help                Show this help.
+EOF
 	exit 0
 }
 
