@@ -24,7 +24,13 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 HLINE="----------------------------------------------------------------------"
 
+# define failure messages:
+WARN_CannotUpdateRemote="[WARN]: Could not run: 'git remote update'."
+ERROR_nogitrepos="Cannot find any git repos in dir: '$DIR'."
+ERROR_cannotcdrepo="Cannot enter directory for repo."
+
 catch_failure(){
+	[ -n "$1" ] && echo "ERROR: $1"
 	echo "Caught a failure."
 	echo "Exiting..."
 	exit 1
@@ -35,9 +41,28 @@ not_implemented(){
 	exit 1
 }
 
+print_help(){
+	local program="$1"
+
+	echo "mirror.sh: Keep a set of git mirrors up to date."
+	echo "Copyright (c) 2015 Layton Nelson <notyal.dev@gmail.com>"
+	echo
+	echo "USAGE: $program [OPTION]..."
+	echo
+	echo "OPTIONS:"
+	echo ">  archive             Archive the repos."
+	echo ">  create <url>        Add a repo to the mirror directory."
+	echo ">  delete <repo>       Remove a repo from the mirror directory."
+	echo ">  list                List mirrors in the mirror directory."
+	echo "     -a, --absolute    Show the absolute path for the location of each mirror."
+	echo ">  path                Show the mirror directory location."
+	echo ">  update              Update the list of mirrors in the mirror directory."
+	exit 0
+}
+
 find_mirrors(){
 	cd "$DIR" || catch_failure
-	find ./* -type d -name '*.git' || catch_failure
+	find ./* -type d -name '*.git' || catch_failure "$ERROR_nogitrepos"
 }
 
 list_mirrors(){
@@ -47,7 +72,7 @@ list_mirrors(){
 		absolute|-a|--absolute|-absolute|abs|--abs|-abs)
 			for repo in $REPOLIST; do
 				cd "$DIR" || catch_failure
-				cd "$repo" || catch_failure
+				cd "$repo" || catch_failure "$ERROR_cannotcdrepo"
 				echo "$PWD"
 			done
 			;;
@@ -68,11 +93,11 @@ update_mirrors(){
 
 	for repo in $REPOLIST; do
 		echo ">>>>> Found repo: '$repo'."
-		cd "$repo" || catch_failure
+		cd "$repo" || catch_failure "$ERROR_cannotcdrepo '$repo'."
 		echo
 
 		echo "( ) Updating repo from remote..."
-		git remote update || echo "[ERROR]: Could not run: 'git remote update'."
+		git remote update || echo "$WARN_CannotUpdateRemote"
 		echo
 
 		echo "( ) Running git-gc to save space..."
@@ -92,7 +117,7 @@ update_mirrors(){
 }
 
 archive_repo(){
-	cd "$DIR"
+	cd "$DIR" || catch_failure
 				# TODO: Write method to archive the repos into a top dir.
 				#
 				#       Also, create a configuration file to store the current
@@ -111,7 +136,7 @@ archive_repo(){
 }
 
 create_repo(){
-	cd "$DIR"
+	cd "$DIR" || catch_failure
 	URL="$1"
 
 	# split url into parts
@@ -179,20 +204,7 @@ case $1 in
 		update_mirrors
 		;;
 	help|-h|--help|-help|*)
-		echo "mirror.sh: Keep a set of git mirrors up to date."
-		echo "Copyright (c) 2015 Layton Nelson <notyal.dev@gmail.com>"
-		echo
-		echo "USAGE: $0 [OPTION]..."
-		echo
-		echo "OPTIONS:"
-		echo ">  archive             Archive the repos."
-		echo ">  create <url>        Add a repo to the mirror directory."
-		echo ">  delete <repo>       Remove a repo from the mirror directory."
-		echo ">  list                List mirrors in the mirror directory."
-		echo "     -a, --absolute    Show the absolute path for the location of each mirror."
-		echo ">  path                Show the mirror directory location."
-		echo ">  update              Update the list of mirrors in the mirror directory."
-		exit 0
+		print_help "$0"
 		;;
 esac
 exit
