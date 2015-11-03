@@ -72,7 +72,7 @@ update_mirrors(){
 		echo
 
 		echo "( ) Updating repo from remote..."
-		git remote update || catch_failure
+		git remote update || echo "[ERROR]: Could not run: 'git remote update'."
 		echo
 
 		echo "( ) Running git-gc to save space..."
