@@ -37,7 +37,7 @@ not_implemented(){
 
 find_mirrors(){
 	cd "$DIR" || catch_failure
-	find . -type d -name '*.git' || catch_failure
+	find ./* -type d -name '*.git' || catch_failure
 }
 
 list_mirrors(){
