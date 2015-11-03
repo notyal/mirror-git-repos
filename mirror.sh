@@ -29,15 +29,16 @@ WARN_CannotUpdateRemote="[WARN]: Could not run: 'git remote update'."
 ERROR_nogitrepos="Cannot find any git repos in dir: '$DIR'."
 ERROR_cannotcdrepo="Cannot enter directory for repo."
 
+# functions:
 catch_failure(){
-	[ -n "$1" ] && echo "ERROR: $1"
-	echo "Caught a failure."
-	echo "Exiting..."
+	[ -n "$1" ] && >&2 echo "ERROR: $1"
+	>&2 echo "Caught a failure."
+	>&2 echo "Exiting..."
 	exit 1
 }
 
 not_implemented(){
-	echo "Error: This feature is currently not implemented."
+	>&2 echo "Error: This feature is currently not implemented."
 	exit 1
 }
 
@@ -97,7 +98,7 @@ update_mirrors(){
 		echo
 
 		echo "( ) Updating repo from remote..."
-		git remote update || echo "$WARN_CannotUpdateRemote"
+		git remote update || >&2 echo "$WARN_CannotUpdateRemote"
 		echo
 
 		echo "( ) Running git-gc to save space..."
