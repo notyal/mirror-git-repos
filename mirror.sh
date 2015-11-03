@@ -85,6 +85,42 @@ list_mirrors(){
 	esac
 }
 
+query_github_repos(){
+	local githubUser=$1
+	local repoURL="https://api.github.com/users/$githubUser/repos"
+
+	# retrieve api token for github
+	if [[ -f "$DIR/gh_token" ]]; then
+		>&2 echo "Using Github API token from 'gh_token' local file..."
+		GITHUB_API_TOKEN=$(<"$DIR"/gh_token)
+	else
+		local github_user=$(git config --get github.user)
+		local github_token=$(git config --get github.token)
+
+		if [[ ! -z "$github_user" && ! -z "$github_token" ]]; then
+			>&2 echo "Using Github API token from Git config..."
+			GITHUB_API_TOKEN="${github_user}:${github_token}"
+		fi
+	fi
+
+	# fetch from github api
+	if [[ -z "$GITHUB_API_TOKEN" ]]; then
+		repoData="$(curl -s -w "%%HTTP=%{http_code}" $repoURL)"
+	else
+		repoData="$(curl -s -w "%%HTTP=%{http_code}" -u $GITHUB_API_TOKEN $repoURL)"
+	fi
+
+	# parse from fetched data
+	local http_code=$(expr match "$repoData" '.*%HTTP=\([0-9]*\)')
+	if [[ $http_code == 200 ]]; then
+		sed -n 's/.*"clone_url": "\(.*\)".*/\1/p' <<< "$repoData"
+	else
+		>&2 echo "ERROR: Got HTTP error: '$http_code', when trying to fetch from Github API."
+		return 1
+	fi
+	unset repoData
+}
+
 update_mirrors(){
 	echo "Looking for repos in directory: '$DIR'..."
 	cd "$DIR" || catch_failure
@@ -203,6 +239,9 @@ case $1 in
 		;;
 	update|-u|--update|-update)
 		update_mirrors
+		;;
+	query|-q|--query|-query)
+		query_github_repos $2
 		;;
 	help|-h|--help|-help|*)
 		print_help "$0"
