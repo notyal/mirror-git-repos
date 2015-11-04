@@ -34,10 +34,9 @@ catch_failure(){
 	local errorMsg="$1"
 
 	if [[ -n "$errorMsg" ]]; then
-		>&2 echo "ERROR: $errorMsg"
+		>&2 echo "Error: $errorMsg"
 	else
-		>&2 echo "Caught a failure."
-		>&2 echo "Exit."
+		>&2 echo "Error: Unknown exception."
 	fi
 
 	exit 1
@@ -133,7 +132,7 @@ query_github_repos(){
 	if [[ $http_code == 200 ]]; then
 		sed -n 's/.*"clone_url": "\(.*\)".*/\1/p' <<< "$repoData"
 	else
-		>&2 echo "ERROR: Got HTTP error '$http_code' when trying to fetch from Github API."
+		catch_failure "Got HTTP error '$http_code' when trying to fetch from Github API."
 		return 1
 	fi
 
@@ -166,44 +165,44 @@ update_mirrors(){
 	done
 }
 
-archive_repo(){
-	cd "$DIR" || catch_failure
-				# TODO: Write method to archive the repos into a top dir.
-				#
-				#       Also, create a configuration file to store the current
-				#       date of the repo, so the archives will only be created
-				#       if the repo hasn't been updated by the remote.
-				#
-				#       Tar+gz the files into a central backup directory, next
-				#       to the individual configuration files.
-
-	#echo "# DEBUG: repo is: '$repo' or '${repo##*/}'."
-	#echo "# DEBUG: current dir is: '$PWD' or '${PWD##*/}'."
-
-	echo "@ Archiving current repo..."
-	cd ..
-	#tar -cvpzf
-}
+# archive_repo(){
+# 	cd "$DIR" || catch_failure
+# 				# TODO: Write method to archive the repos into a top dir.
+# 				#
+# 				#       Also, create a configuration file to store the current
+# 				#       date of the repo, so the archives will only be created
+# 				#       if the repo hasn't been updated by the remote.
+# 				#
+# 				#       Tar+gz the files into a central backup directory, next
+# 				#       to the individual configuration files.
+#
+# 	#echo "# DEBUG: repo is: '$repo' or '${repo##*/}'."
+# 	#echo "# DEBUG: current dir is: '$PWD' or '${PWD##*/}'."
+#
+# 	echo "@ Archiving current repo..."
+# 	cd ..
+# 	#tar -cvpzf
+# }
 
 create_repo(){
+	local URL="$1"
+
 	cd "$DIR" || catch_failure
-	URL="$1"
 
 	# split url into parts
-	URL_ARRAY=($(echo "$URL" | awk -F/ '{for(i=3;i<=NF;i++) printf "%s\t",$i}'))
+	URL_ARRAY=($(awk -F/ '{for(i=3;i<=NF;i++) printf "%s\t",$i}' <<< "$URL"))
 
-	REPO_FOLDER="${URL_ARRAY[@]:(-1)}"  # put the repo folder into its own variable
+	# put the repo folder into its own variable
+	REPO_FOLDER="${URL_ARRAY[@]:(-1)}"
 
 	# make sure REPO_FOLDER ends in ".git"
-	EXT=$(echo "$REPO_FOLDER" | awk -F . '{if (NF>1) {print $NF}}')
+	EXT=$(awk -F . '{if (NF>1) {print $NF}}' <<< "$REPO_FOLDER")
 
 	# add ".git" if needed
-	if [[ ! "$EXT" = "git" ]]; then
-		REPO_FOLDER="${REPO_FOLDER}.git"
-	fi
+	[[ ! "$EXT" = "git" ]] && REPO_FOLDER="${REPO_FOLDER}.git"
 
-	unset URL_ARRAY[${#URL_ARRAY[@]}-1]  # remove repo folder from the array
-
+	# remove repo folder from the array
+	unset URL_ARRAY[${#URL_ARRAY[@]}-1]
 
 	echo "@ Creating repo for \"$1\"..."
 
