@@ -145,22 +145,22 @@ query_github_repos(){
 	# retrieve api token for github
 	if [[ -f "$DIR/gh_token" ]]; then
 		>&2 echo "${cINFO}Using Github API token from${c} '${cDIR}gh_token${c}' ${cINFO}local file...${c}"
-		GITHUB_API_TOKEN=$(<"$DIR"/gh_token)
+		github_api_token=$(<"$DIR"/gh_token)
 	else
 		local github_user=$(git config --get github.user)
 		local github_token=$(git config --get github.token)
 
 		if [[ ! -z "$github_user" && ! -z "$github_token" ]]; then
 			>&2 echo "${cINFO}Using Github API token from Git config...${c}"
-			GITHUB_API_TOKEN="${github_user}:${github_token}"
+			github_api_token="${github_user}:${github_token}"
 		fi
 	fi
 
 	# fetch from github api
-	if [[ -z "$GITHUB_API_TOKEN" ]]; then
+	if [[ -z "$github_api_token" ]]; then
 		repo_data="$(curl -s -w "%%HTTP=%{http_code}" $repo_url)"
 	else
-		repo_data="$(curl -s -w "%%HTTP=%{http_code}" -u $GITHUB_API_TOKEN $repo_url)"
+		repo_data="$(curl -s -w "%%HTTP=%{http_code}" -u $github_api_token $repo_url)"
 	fi
 
 	# parse from fetched data
