@@ -57,16 +57,17 @@ Copyright (c) 2015 Layton Nelson <notyal.dev@gmail.com>
 USAGE: $program [OPTION]...
 
 OPTIONS:
-  archive             Archive the repos.
-  create <url>        Add a repo to the mirror directory.
-  delete <repo>       Remove a repo from the mirror directory.
-  list                List mirrors in the mirror directory.
-    -a, --absolute    Show the absolute path for the location of each mirror.
-  path                Show the mirror directory location.
-  update              Update the list of mirrors in the mirror directory.
-  query <user>        Query the Github API for a list of repos associated with
-                      the provided user.
-  help                Show this help.
+  archive                Archive the repos.
+  create <url>           Add a repo to the mirror directory.
+  backup-gh-user <user>  Backup all repos associated with a user on Github.
+  delete <repo>          Remove a repo from the mirror directory.
+  list                   List mirrors in the mirror directory.
+    -a, --absolute       Show the absolute path for the location of each mirror.
+  path                   Show the mirror directory location.
+  update                 Update the list of mirrors in the mirror directory.
+  query <user>           Query the Github API for a list of repos associated
+                         with the provided user.
+  help                   Show this help.
 EOF
 	exit 0
 }
@@ -242,15 +243,16 @@ create_repo(){
 	cd "$DIR" || catch_failure
 }
 
-create_from_gh(){
+backup_gh_user(){
 	local github_user=$1
 	if [[ -z "$github_user" ]]; then
 		catch_failure "No user was provided."
 		exit 1
 	fi
 
-	for i in $(query_github_repos $github_user); do
-		echo "GOT: '$i'."
+	echo "@ Cloning all repos from Github user: $github_user"
+	for github_repo in $(query_github_repos $github_user); do
+		create_repo "$github_repo"
 	done
 }
 
@@ -258,6 +260,7 @@ create_from_gh(){
 case $1 in
 	archive        |-a   ) not_implemented       ;; #archive_repo
 	create         |-c   ) create_repo "$2"      ;;
+	backup-gh-user |-b   ) backup_gh_user "$2"   ;;
 	delete         |-d   ) not_implemented       ;; #delete_repo
 	list           |-l   ) list_mirrors $2       ;;
 	path           |-p   ) echo "$DIR"           ;;
