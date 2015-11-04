@@ -231,8 +231,21 @@ create_repo(){
 	cd "$DIR" || catch_failure
 }
 
+create_from_gh(){
+	local githubUser=$1
+	if [[ -z "$githubUser" ]]; then
+		catch_failure "No user was provided."
+		exit 1
+	fi
+
+	for i in $(query_github_repos $githubUser); do
+		echo "GOT: '$i'."
+	done
+}
+
 # main()
 case $1 in
+	test   |-t                    ) create_from_gh        ;;
 	archive|-a|--archive|-archive ) not_implemented       ;; #archive_repo
 	create |-c|--create |-create  ) create_repo "$2"      ;;
 	delete |-d|--delete |-delete  ) not_implemented       ;; #delete_repo
