@@ -31,10 +31,10 @@ ERROR_cannotcdrepo="Cannot enter directory for repo."
 
 # functions:
 catch_failure(){
-	local errorMsg="$1"
+	local error_msg="$1"
 
-	if [[ -n "$errorMsg" ]]; then
-		>&2 echo "Error: $errorMsg"
+	if [[ -n "$error_msg" ]]; then
+		>&2 echo "Error: $error_msg"
 	else
 		>&2 echo "Error: Unknown exception."
 	fi
@@ -96,11 +96,11 @@ list_mirrors(){
 }
 
 query_github_repos(){
-	local githubUser=$1
-	local repoURL="https://api.github.com/users/$githubUser/repos"
+	local github_user=$1
+	local repo_url="https://api.github.com/users/$github_user/repos"
 
 	# check for argument
-	if [[ -z "$githubUser" ]]; then
+	if [[ -z "$github_user" ]]; then
 		catch_failure "No user was provided."
 		exit 1
 	fi
@@ -121,22 +121,22 @@ query_github_repos(){
 
 	# fetch from github api
 	if [[ -z "$GITHUB_API_TOKEN" ]]; then
-		repoData="$(curl -s -w "%%HTTP=%{http_code}" $repoURL)"
+		repo_data="$(curl -s -w "%%HTTP=%{http_code}" $repo_url)"
 	else
-		repoData="$(curl -s -w "%%HTTP=%{http_code}" -u $GITHUB_API_TOKEN $repoURL)"
+		repo_data="$(curl -s -w "%%HTTP=%{http_code}" -u $GITHUB_API_TOKEN $repo_url)"
 	fi
 
 	# parse from fetched data
-	local http_code=$(expr match "$repoData" '.*%HTTP=\([0-9]*\)')
+	local http_code=$(expr match "$repo_data" '.*%HTTP=\([0-9]*\)')
 
 	if [[ $http_code == 200 ]]; then
-		sed -n 's/.*"clone_url": "\(.*\)".*/\1/p' <<< "$repoData"
+		sed -n 's/.*"clone_url": "\(.*\)".*/\1/p' <<< "$repo_data"
 	else
 		catch_failure "Got HTTP error '$http_code' when trying to fetch from Github API."
 		return 1
 	fi
 
-	unset repoData
+	unset repo_data
 }
 
 update_mirrors(){
