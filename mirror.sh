@@ -79,6 +79,7 @@ find_mirrors(){
 list_mirrors(){
 	REPOLIST=$(find_mirrors)
 
+	# parse arguments
 	case $1 in
 		absolute|-a|--absolute|-absolute|abs|--abs|-abs)
 			for repo in $REPOLIST; do
@@ -128,33 +129,29 @@ query_github_repos(){
 
 	# parse from fetched data
 	local http_code=$(expr match "$repoData" '.*%HTTP=\([0-9]*\)')
+
 	if [[ $http_code == 200 ]]; then
 		sed -n 's/.*"clone_url": "\(.*\)".*/\1/p' <<< "$repoData"
 	else
 		>&2 echo "ERROR: Got HTTP error '$http_code' when trying to fetch from Github API."
 		return 1
 	fi
+
 	unset repoData
 }
 
 update_mirrors(){
-	echo "Looking for repos in directory: '$DIR'..."
+	echo "@ Looking for repos in directory: '$DIR'..."
 	cd "$DIR" || catch_failure
 	echo
 
-	REPOLIST=$(find_mirrors)
-
-	for repo in $REPOLIST; do
-		echo ">>>>> Found repo: '$repo'."
+	for repo in $(find_mirrors); do
+		echo "@ Found repo: '$repo'."
 		cd "$repo" || catch_failure "$ERROR_cannotcdrepo '$repo'."
 		echo
 
-		echo "( ) Updating repo from remote..."
+		echo "@ Updating repo from remote..."
 		git remote update || >&2 echo "$WARN_CannotUpdateRemote"
-		echo
-
-		echo "( ) Running git-gc to save space..."
-		git gc
 		echo
 
 		# TODO: Archive this repo
@@ -162,7 +159,7 @@ update_mirrors(){
 		#echo
 
 		# done with this repo, go back to top directory
-		echo "(*) Done with '$repo'."
+		echo "\$ Done with '$repo'."
 		echo "$HLINE"
 		cd "$DIR" || catch_failure
 		echo
@@ -183,7 +180,7 @@ archive_repo(){
 	#echo "# DEBUG: repo is: '$repo' or '${repo##*/}'."
 	#echo "# DEBUG: current dir is: '$PWD' or '${PWD##*/}'."
 
-	echo "( ) Archiving current repo..."
+	echo "@ Archiving current repo..."
 	cd ..
 	#tar -cvpzf
 }
@@ -208,29 +205,29 @@ create_repo(){
 	unset URL_ARRAY[${#URL_ARRAY[@]}-1]  # remove repo folder from the array
 
 
-	echo "( ) Creating repo for \"$1\"..."
+	echo "@ Creating repo for \"$1\"..."
 
 	# basically, mkdir -p DOMAIN/DIR for repo url
 	for folder in ${URL_ARRAY[@]}; do
 		if [[ ! -d "$folder" ]]; then
-			echo ">>>>> Creating folder: '$folder' ..."
+			echo "@ Creating folder: '$folder' ..."
 			mkdir "$folder" || catch_failure
 		fi
 		cd "$folder" || catch_failure
 	done
 	echo
 
-	echo "( ) Cloning repo for \"$1\"..."
+	echo "@ Cloning repo for \"$1\"..."
 	git clone --mirror "$URL" "$REPO_FOLDER" || catch_failure
 	cd "$REPO_FOLDER" || catch_failure
 	echo
 
-	echo "( ) Running git-gc to save space..."
+	echo "@ Running git-gc to save space..."
 	git gc
 	echo
 
 	# done with this repo, go back to top directory
-	echo "(*) Done with '$REPO_FOLDER."
+	echo "\$ Done with '$REPO_FOLDER."
 	echo "$HLINE"
 	cd "$DIR" || catch_failure
 }
