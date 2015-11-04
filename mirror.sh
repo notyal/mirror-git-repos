@@ -81,7 +81,7 @@ list_mirrors(){
 
 	# parse arguments
 	case $1 in
-		absolute|-a|--absolute|-absolute|abs|--abs|-abs)
+		-a|--absolute)
 			for repo in $repo_list; do
 				cd "$DIR" || catch_failure
 				cd "$repo" || catch_failure "$ERROR_cannot_cd_repo"
@@ -246,14 +246,13 @@ create_from_gh(){
 
 # main()
 case $1 in
-	test   |-t                    ) create_from_gh        ;;
-	archive|-a|--archive|-archive ) not_implemented       ;; #archive_repo
-	create |-c|--create |-create  ) create_repo "$2"      ;;
-	delete |-d|--delete |-delete  ) not_implemented       ;; #delete_repo
-	list   |-l|--list   |-list    ) list_mirrors $2       ;;
-	path   |-p|--path   |-path    ) echo "$DIR"           ;;
-	update |-u|--update |-update  ) update_mirrors        ;;
-	query  |-q|--query  |-query   ) query_github_repos $2 ;;
-	help   |-h|--help   |-help |* ) print_help "$0"       ;;
+	archive        |-a   ) not_implemented       ;; #archive_repo
+	create         |-c   ) create_repo "$2"      ;;
+	delete         |-d   ) not_implemented       ;; #delete_repo
+	list           |-l   ) list_mirrors $2       ;;
+	path           |-p   ) echo "$DIR"           ;;
+	update         |-u   ) update_mirrors        ;;
+	query          |-q   ) query_github_repos $2 ;;
+	help           |-h |*) print_help "$0"       ;;
 esac
 exit
