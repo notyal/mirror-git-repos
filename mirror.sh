@@ -99,6 +99,12 @@ query_github_repos(){
 	local githubUser=$1
 	local repoURL="https://api.github.com/users/$githubUser/repos"
 
+	# check for argument
+	if [[ -z "$githubUser" ]]; then
+		catch_failure "No user was provided."
+		exit 1
+	fi
+
 	# retrieve api token for github
 	if [[ -f "$DIR/gh_token" ]]; then
 		>&2 echo "Using Github API token from 'gh_token' local file..."
