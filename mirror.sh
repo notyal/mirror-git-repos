@@ -22,12 +22,12 @@
 ################################################################################
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-HLINE="----------------------------------------------------------------------"
+horizontal_line="----------------------------------------------------------------------"
 
 # define failure messages:
-WARN_CannotUpdateRemote="[WARN]: Could not run: 'git remote update'."
-ERROR_nogitrepos="Cannot find any git repos in dir: '$DIR'."
-ERROR_cannotcdrepo="Cannot enter directory for repo."
+WARN_cannot_update_remote="[WARN]: Could not run: 'git remote update'."
+ERROR_no_git_repos="Cannot find any git repos in dir: '$DIR'."
+ERROR_cannot_cd_repo="Cannot enter directory for repo."
 
 # functions:
 catch_failure(){
@@ -72,23 +72,23 @@ EOF
 
 find_mirrors(){
 	cd "$DIR" || catch_failure
-	find ./* -type d -name '*.git' || catch_failure "$ERROR_nogitrepos"
+	find ./* -type d -name '*.git' || catch_failure "$ERROR_no_git_repos"
 }
 
 list_mirrors(){
-	REPOLIST=$(find_mirrors)
+	repo_list=$(find_mirrors)
 
 	# parse arguments
 	case $1 in
 		absolute|-a|--absolute|-absolute|abs|--abs|-abs)
-			for repo in $REPOLIST; do
+			for repo in $repo_list; do
 				cd "$DIR" || catch_failure
-				cd "$repo" || catch_failure "$ERROR_cannotcdrepo"
+				cd "$repo" || catch_failure "$ERROR_cannot_cd_repo"
 				echo "$PWD"
 			done
 			;;
 		*)
-			for repo in $REPOLIST; do
+			for repo in $repo_list; do
 				echo "$repo"
 			done
 			;;
@@ -146,11 +146,11 @@ update_mirrors(){
 
 	for repo in $(find_mirrors); do
 		echo "@ Found repo: '$repo'."
-		cd "$repo" || catch_failure "$ERROR_cannotcdrepo '$repo'."
+		cd "$repo" || catch_failure "$ERROR_cannot_cd_repo '$repo'."
 		echo
 
 		echo "@ Updating repo from remote..."
-		git remote update || >&2 echo "$WARN_CannotUpdateRemote"
+		git remote update || >&2 echo "$WARN_cannot_update_remote"
 		echo
 
 		# TODO: Archive this repo
@@ -159,7 +159,7 @@ update_mirrors(){
 
 		# done with this repo, go back to top directory
 		echo "\$ Done with '$repo'."
-		echo "$HLINE"
+		echo "$horizontal_line"
 		cd "$DIR" || catch_failure
 		echo
 	done
@@ -185,29 +185,29 @@ update_mirrors(){
 # }
 
 create_repo(){
-	local URL="$1"
+	local repo_url="$1"
 
 	cd "$DIR" || catch_failure
 
 	# split url into parts
-	URL_ARRAY=($(awk -F/ '{for(i=3;i<=NF;i++) printf "%s\t",$i}' <<< "$URL"))
+	url_array=($(awk -F/ '{for(i=3;i<=NF;i++) printf "%s\t",$i}' <<< "$repo_url"))
 
 	# put the repo folder into its own variable
-	REPO_FOLDER="${URL_ARRAY[@]:(-1)}"
+	repo_folder="${url_array[@]:(-1)}"
 
-	# make sure REPO_FOLDER ends in ".git"
-	EXT=$(awk -F . '{if (NF>1) {print $NF}}' <<< "$REPO_FOLDER")
+	# make sure repo_folder ends in ".git"
+	repo_folder_ext=$(awk -F . '{if (NF>1) {print $NF}}' <<< "$repo_folder")
 
 	# add ".git" if needed
-	[[ ! "$EXT" = "git" ]] && REPO_FOLDER="${REPO_FOLDER}.git"
+	[[ ! "$repo_folder_ext" = "git" ]] && repo_folder="${repo_folder}.git"
 
 	# remove repo folder from the array
-	unset URL_ARRAY[${#URL_ARRAY[@]}-1]
+	unset url_array[${#url_array[@]}-1]
 
 	echo "@ Creating repo for \"$1\"..."
 
 	# basically, mkdir -p DOMAIN/DIR for repo url
-	for folder in ${URL_ARRAY[@]}; do
+	for folder in ${url_array[@]}; do
 		if [[ ! -d "$folder" ]]; then
 			echo "@ Creating folder: '$folder' ..."
 			mkdir "$folder" || catch_failure
@@ -217,8 +217,8 @@ create_repo(){
 	echo
 
 	echo "@ Cloning repo for \"$1\"..."
-	git clone --mirror "$URL" "$REPO_FOLDER" || catch_failure
-	cd "$REPO_FOLDER" || catch_failure
+	git clone --mirror "$repo_url" "$repo_folder" || catch_failure
+	cd "$repo_folder" || catch_failure
 	echo
 
 	echo "@ Running git-gc to save space..."
@@ -226,19 +226,19 @@ create_repo(){
 	echo
 
 	# done with this repo, go back to top directory
-	echo "\$ Done with '$REPO_FOLDER."
-	echo "$HLINE"
+	echo "\$ Done with '$repo_folder."
+	echo "$horizontal_line"
 	cd "$DIR" || catch_failure
 }
 
 create_from_gh(){
-	local githubUser=$1
-	if [[ -z "$githubUser" ]]; then
+	local github_user=$1
+	if [[ -z "$github_user" ]]; then
 		catch_failure "No user was provided."
 		exit 1
 	fi
 
-	for i in $(query_github_repos $githubUser); do
+	for i in $(query_github_repos $github_user); do
 		echo "GOT: '$i'."
 	done
 }
