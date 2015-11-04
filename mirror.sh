@@ -140,6 +140,12 @@ query_github_repos(){
 	unset repo_data
 }
 
+update_mirror_remote(){
+	echo "@ Updating repo from remote..."
+	git remote update || >&2 echo "$WARN_cannot_update_remote"
+	echo
+}
+
 update_mirrors(){
 	echo "@ Looking for repos in directory: '$DIR'..."
 	cd "$DIR" || catch_failure
@@ -150,9 +156,7 @@ update_mirrors(){
 		cd "$repo" || catch_failure "$ERROR_cannot_cd_repo '$repo'."
 		echo
 
-		echo "@ Updating repo from remote..."
-		git remote update || >&2 echo "$WARN_cannot_update_remote"
-		echo
+		update_mirror_remote
 
 		# TODO: Archive this repo
 		#archive_repo
@@ -217,14 +221,20 @@ create_repo(){
 	done
 	echo
 
-	echo "@ Cloning repo for \"$1\"..."
-	git clone --mirror "$repo_url" "$repo_folder" || catch_failure
-	cd "$repo_folder" || catch_failure
-	echo
+	if [[ ! -d "$repo_folder" ]]; then
+		echo "@ Cloning repo for \"$1\"..."
+		git clone --mirror "$repo_url" "$repo_folder" || catch_failure
+		cd "$repo_folder" || catch_failure
+		echo
 
-	echo "@ Running git-gc to save space..."
-	git gc
-	echo
+		echo "@ Running git-gc to save space..."
+		git gc
+		echo
+	else
+		echo "NOTE: Repo has already been cloned or the folder already exists..."
+		echo
+		update_mirror_remote
+	fi
 
 	# done with this repo, go back to top directory
 	echo "\$ Done with '$repo_folder."
