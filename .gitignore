@@ -1,4 +1,1 @@
-*
-!/.gitignore
-!/mirror.sh
-!/*.md
+/repos
