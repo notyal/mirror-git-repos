@@ -23,6 +23,7 @@
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 DIR="$SCRIPT_DIR/repos"
+prefs_file="$SCRIPT_DIR/prefs.ini"
 
 # enable colors
 alias echo='echo -e'
@@ -127,6 +128,7 @@ list_mirrors(){
 		*)
 			for repo in $repo_list; do
 				echo "$repo"
+				modify_prefs "$repo"
 			done
 			;;
 	esac
@@ -291,16 +293,75 @@ backup_gh_user(){
 	done
 }
 
+parse_prefs(){
+	not_implemented
+}
+
+modify_prefs(){
+	# create or modify preferences in prefs file
+
+	local repo_path="$1" # path of repo
+	local status="$2" # [d,e]: d=(disabled), e=(enabled)
+
+	# create a new prefs file, if needed
+	if [[ ! -f "$prefs_file" ]]; then
+		touch "$prefs_file"
+		echo "# Preference file for mirror.sh (Generated: $(date))" > "$prefs_file"
+		printf '\n' >> "$prefs_file"
+	fi
+
+	# check for existing line before attempting to create a new one
+	echo "REPO PATH = $repo_path, STATUS = $status"
+	local pref_line="$(grep $repo_path $prefs_file | head -1 || catch_failure 'cannot grep')"
+	echo "pref_line: $pref_line"
+
+	if [[ -n "$pref_line" ]]; then
+		pref_status="$(awk '{print $1}' <<<"$pref_line")"
+		echo "pref_status: $pref_status"
+
+		# switch status for repo_path
+		# only if $status is not empty
+		if [[ -n "$status" ]] && [[ "$pref_status" == 'e' || "$pref_status" == 'd' ]] && [[ "$pref_status" != "$status" ]]; then
+			sed "s/${pref_status}\t${repo_path}/${status}\t${repo_path}//" \
+				|| catch_failure "cannot change status for ${repo_path} in prefs file"
+		fi
+
+	elif [[ -z "$pref_line" ]]; then
+		# $pref_line is empty, therefore create a new line in prefs file
+		if [[ $status = 'e' ||  $status = 'd' ]]; then
+			# format a new line
+			printf "%s\t%s\n" "$status" "$repo_path" >> "$prefs_file" || catch_failure "cannot create line in prefs file"
+		elif [[ -z $status ]]; then
+			# format a new line (default, enable)
+			printf "%s\t%s\n" "e" "$repo_path" >> "$prefs_file" || catch_failure "cannot create line in prefs file"
+		else
+			catch_failure "Internal Error: incorrect status provided for prefs file."
+		fi
+	fi
+}
+
+run_prefs(){
+	if [[ -f "$prefs_file" ]]; then
+		>&2 echo "${cINFO}Parsing prefs file from:${c} '${cDIR}${prefs_file}${c}' ${cINFO}...${c}"
+		parse_prefs
+	else
+		>&2 echo "${cERROR}ERROR: Prefs file:${c} '${cDIR}${prefs_file}${c}' ${cERROR}does not exist!${c}"
+		>&2 echo
+		print_help "$0"
+	fi
+}
+
 # main()
 case $1 in
-	archive        |-a   ) not_implemented       ;; #archive_repo
-	create         |-c   ) create_repo "$2"      ;;
-	backup-gh-user |-b   ) backup_gh_user "$2"   ;;
-	delete         |-d   ) not_implemented       ;; #delete_repo
-	list           |-l   ) list_mirrors $2       ;;
-	path           |-p   ) echo "$DIR"           ;;
-	update         |-u   ) update_mirrors        ;;
-	query          |-q   ) query_github_repos $2 ;;
-	help           |-h |*) print_help "$0"       ;;
+	archive        |-a ) not_implemented       ;; #archive_repo
+	create         |-c ) create_repo "$2"      ;;
+	backup-gh-user |-b ) backup_gh_user "$2"   ;;
+	delete         |-d ) not_implemented       ;; #delete_repo
+	list           |-l ) list_mirrors $2       ;;
+	path           |-p ) echo "$DIR"           ;;
+	update         |-u ) update_mirrors        ;;
+	query          |-q ) query_github_repos $2 ;;
+	help           |-h ) print_help "$0"       ;;
+	                 * ) run_prefs             ;;
 esac
 exit
