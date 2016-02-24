@@ -63,16 +63,16 @@ catch_failure(){
 	local error_msg="$1"
 
 	if [[ -n "$error_msg" ]]; then
-		>&2 echo "Error: $error_msg"
+		>&2 echo "${cERROR}Error: ${error_msg}${c}"
 	else
-		>&2 echo "Error: Unknown exception."
+		>&2 echo "${cERROR}Error: Unknown exception.${c}"
 	fi
 
 	exit 1
 }
 
 not_implemented(){
-	>&2 echo "Error: This feature is currently not implemented."
+	>&2 echo "${cERROR}Error: This feature is currently not implemented.${c}"
 	exit 1
 }
 
@@ -261,8 +261,14 @@ create_repo(){
 
 	if [[ ! -d "$repo_folder" ]]; then
 		echo "${_m} Cloning repo for \"$1\"..."
-		git clone --mirror "$repo_url" "$repo_folder" || catch_failure
-		cd "$repo_folder" || catch_failure
+		git clone --mirror "$repo_url" "$repo_folder"
+
+		if [[ -d "$repo_folder" ]]; then
+			cd "$repo_folder" || catch_failure
+		else
+			echo "${cWARN}WARNING: git failed to clone repo.${c}"
+		fi
+
 		echo
 
 echo "${_m} ${cINFO}Running git-gc to save space...${c}"
